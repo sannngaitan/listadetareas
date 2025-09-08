@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<h1>Añadir Tarea</h1>
+
+Nombre de la tarea: <input type="text" name="nombre" id="nombre"> <br><br>
+Descripcion de la tarea: <input type="text" name="descripcion" id="descripcion"> <br><br>
+Categoría: 
+<select id="categoria">
+    <option value="Trabajo">Trabajo</option>
+    <option value="Estudio">Estudio</option>
+    <option value="Personal">Personal</option>
+</select>
+<br><br>
+
+    <button onclick="guardarTarea()">Añadir</button> <br><br><br>
+
+
+    <a href="index.html"><button>Volver a la pagina principal</button></a>
+
+    <script>
+    function guardarTarea() {
+        const nombre = document.getElementById('nombre').value;
+        const descripcion = document.getElementById('descripcion').value;
+        const categoria = document.getElementById('categoria').value;
+        const tarea = { nombre, descripcion, categoria };
+
+        let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+        tareas.push(tarea);
+
+        localStorage.setItem('tareas', JSON.stringify(tareas));
+        alert('Tarea guardada!');
+    }
+    </script>
+    </body>
+</html>

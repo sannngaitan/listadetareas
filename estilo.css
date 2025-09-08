@@ -1,0 +1,24 @@
+.botones {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+}
+
+.tarjeta {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+            margin: 10px 0;
+            box-shadow: 2px 2px 8px #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .realizada {
+            background-color: #e0ffe0;
+            text-decoration: line-through;
+        }
+        .acciones {
+            display: flex;
+            gap: 10px;
+        }

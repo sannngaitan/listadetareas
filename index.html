@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Tareas</title>
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+    <h1>Lista de Tareas</h1>
+    <div class="botones">
+        <a href="añadir.html"><button>Añadir tarea</button></a>
+        <a href="eliminar.html"><button>Eliminar tarea</button></a>
+    </div>
+
+    <label for="filtro-categoria">Filtrar por categoría:</label>
+    <select id="filtro-categoria" onchange="mostrarTareas()">
+        <option value="Todas">Todas</option>
+        <option value="Trabajo">Trabajo</option>
+        <option value="Estudio">Estudio</option>
+        <option value="Personal">Personal</option>
+    </select>
+
+    <h2>Tareas</h2>
+    <div id="lista-tareas"></div>
+
+    <script>
+        function mostrarTareas() {
+            const contenedor = document.getElementById('lista-tareas');
+            contenedor.innerHTML = '';
+            const filtro = document.getElementById('filtro-categoria').value;
+            const tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+            tareas.forEach((tarea, index) => {
+                if (filtro !== 'Todas' && tarea.categoria !== filtro) return;
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta' + (tarea.realizada ? ' realizada' : '');
+
+                const info = document.createElement('div');
+                info.innerHTML = `<strong>${tarea.nombre}</strong><br>${tarea.descripcion}<br><em>${tarea.categoria}</em>`;
+
+                const acciones = document.createElement('div');
+                acciones.className = 'acciones';
+
+                const btnRealizada = document.createElement('button');
+                btnRealizada.textContent = tarea.realizada ? '✔️' : 'Marcar realizada';
+                btnRealizada.onclick = function() {
+                    marcarRealizada(index);
+                };
+
+                const btnEditar = document.createElement('button');
+                btnEditar.textContent = 'Editar';
+                btnEditar.onclick = function() {
+                    editarTarea(index);
+                };
+
+                acciones.appendChild(btnRealizada);
+                acciones.appendChild(btnEditar);
+
+                tarjeta.appendChild(info);
+                tarjeta.appendChild(acciones);
+
+                contenedor.appendChild(tarjeta);
+            });
+        }
+
+        function marcarRealizada(index) {
+            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+            tareas[index].realizada = !tareas[index].realizada;
+            localStorage.setItem('tareas', JSON.stringify(tareas));
+            mostrarTareas();
+        }
+
+        function editarTarea(index) {
+            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+            const nuevoNombre = prompt('Nuevo nombre de la tarea:', tareas[index].nombre);
+            const nuevaDescripcion = prompt('Nueva descripción de la tarea:', tareas[index].descripcion);
+            const nuevaCategoria = prompt('Nueva categoría (Trabajo, Estudio, Personal):', tareas[index].categoria);
+            if (nuevoNombre !== null && nuevaDescripcion !== null && nuevaCategoria !== null) {
+                tareas[index].nombre = nuevoNombre;
+                tareas[index].descripcion = nuevaDescripcion;
+                tareas[index].categoria = nuevaCategoria;
+                localStorage.setItem('tareas', JSON.stringify(tareas));
+                mostrarTareas();
+            }
+        }
+
+        window.onload = mostrarTareas;
+    </script>
+</body>
+</html>
