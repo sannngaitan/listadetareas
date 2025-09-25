@@ -3,6 +3,18 @@
     justify-content: center;
     gap: 100px;
 }
+button{
+    background-color: black;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;;
+
+}
+button:hover {
+    transform: translateY(-3px); 
+       box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3); 
+}
 
 .tarjeta {
     border: 1px solid #ccc;
@@ -22,3 +34,60 @@
             display: flex;
             gap: 10px;
         }
+
+    h1{
+        text-align: center;
+        font-family: "Oswald", sans-serif;
+    }
+    h2{
+         font-family: "Oswald", sans-serif;
+    }
+    label{
+        
+         font-family: "Oswald", sans-serif;
+    }
+    #categoria{
+        height: 30px;
+    }
+    option{
+        font-family: "Oswald", sans-serif;
+    }
+    .eliminarrr{
+        width: 50px;
+        height: 100px;
+        background-color: white;
+    }
+    #Volver{
+      width: 200px;
+      height: 70px;
+      font-size: large;
+    }
+    #centrar{
+        margin: auto;
+        padding-top: 5px;
+        align-items: center;
+        text-align: center;
+        width: 300px;
+        height: 450px;
+        background-color: #555555;
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
+    }
+    #añadir{
+        height: 40px;
+        width: 100px;
+    }
+    #centrar2{
+        margin: auto;
+        padding-top: 5px;
+        align-items: center;
+        text-align: center;
+        width: auto;
+        height: auto;
+        background-color: #555555;
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
+    }
+    

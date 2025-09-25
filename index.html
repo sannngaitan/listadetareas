@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=Cinzel:wght@400..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Oswald:wght@200..700&family=Outfit:wght@100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Roboto+Serif:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Lista de Tareas</title>
     <link rel="stylesheet" href="estilo.css">
 </head>
-<body>
+<body style="background-color: #FFDD33;">
     <h1>Lista de Tareas</h1>
     <div class="botones">
         <a href="añadir.html"><button>Añadir tarea</button></a>
@@ -24,7 +27,7 @@
     <div id="lista-tareas"></div>
 
     <script>
-        function mostrarTareas() {
+        function mostrarTareas()  {
             const contenedor = document.getElementById('lista-tareas');
             contenedor.innerHTML = '';
             const filtro = document.getElementById('filtro-categoria').value;
@@ -32,6 +35,7 @@
             tareas.forEach((tarea, index) => {
                 if (filtro !== 'Todas' && tarea.categoria !== filtro) return;
                 const tarjeta = document.createElement('div');
+                   tarjeta.style.backgroundColor = 'white'
                 tarjeta.className = 'tarjeta' + (tarea.realizada ? ' realizada' : '');
 
                 const info = document.createElement('div');

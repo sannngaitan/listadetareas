@@ -4,13 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="estilo.css">
 </head>
-<body>
+<body style="background-color:  #FFDD33;">
+    
 <h1>Añadir Tarea</h1>
 
-Nombre de la tarea: <input type="text" name="nombre" id="nombre"> <br><br>
-Descripcion de la tarea: <input type="text" name="descripcion" id="descripcion"> <br><br>
-Categoría: 
+<div id="centrar">
+<h2>Nombre de la tarea:</h2> <input type="text" name="nombre" id="nombre"> <br><br>
+<h2>Descripcion de la tarea: </h2><input type="text" name="descripcion" id="descripcion"> <br><br>
+<h2>Categoría:</h2> 
 <select id="categoria">
     <option value="Trabajo">Trabajo</option>
     <option value="Estudio">Estudio</option>
@@ -18,11 +21,12 @@ Categoría:
 </select>
 <br><br>
 
-    <button onclick="guardarTarea()">Añadir</button> <br><br><br>
+    <button id="añadir" onclick="guardarTarea()">Añadir</button> <br><br><br>
 
-
+ 
+ 
     <a href="index.html"><button>Volver a la pagina principal</button></a>
-
+ 
     <script>
     function guardarTarea() {
         const nombre = document.getElementById('nombre').value;
@@ -37,5 +41,6 @@ Categoría:
         alert('Tarea guardada!');
     }
     </script>
+    </div>
     </body>
 </html>
