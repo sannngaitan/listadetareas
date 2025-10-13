@@ -1,93 +1,278 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Bebas+Neue&family=Cinzel:wght@400..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Oswald:wght@200..700&family=Outfit:wght@100..900&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Roboto+Serif:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
-    <meta charset="UTF-8">
-    <title>Lista de Tareas</title>
-    <link rel="stylesheet" href="estilo.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lista de Tareas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css" />
 </head>
-<body style="background-color: #FFDD33;">
-    <h1>Lista de Tareas</h1>
-    <div class="botones">
-        <a href="añadir.html"><button>Añadir tarea</button></a>
-        <a href="eliminar.html"><button>Eliminar tarea</button></a>
-    </div>
+<body>
+  <header class="header">
+    <h1 class="header__title">Lista de Tareas</h1>
+    <nav class="header__actions">
+      <a class="btn btn--primary" href="añadir.html">Añadir tarea</a>
+      <a class="btn" href="eliminar.html">Eliminar tarea</a>
+    </nav>
+  </header>
 
-    <label for="filtro-categoria">Filtrar por categoría:</label>
-    <select id="filtro-categoria" onchange="mostrarTareas()">
-        <option value="Todas">Todas</option>
-        <option value="Trabajo">Trabajo</option>
-        <option value="Estudio">Estudio</option>
-        <option value="Personal">Personal</option>
-    </select>
+  <div class="layout">
+    <aside class="sidebar">
+      <h2 class="sidebar__title">Filtros</h2>
 
-    <h2>Tareas</h2>
-    <div id="lista-tareas"></div>
+      <label for="filtro-categoria" class="label">Categoría</label>
+      <input id="filtro-categoria" class="input" list="categorias" placeholder="Todas / escribí para filtrar" oninput="mostrarTareas()" />
+      <datalist id="categorias">
+        <option value="Todas"></option>
+        <option value="Trabajo"></option>
+        <option value="Estudio"></option>
+        <option value="Personal"></option>
+      </datalist>
 
-    <script>
-        function mostrarTareas()  {
-            const contenedor = document.getElementById('lista-tareas');
-            contenedor.innerHTML = '';
-            const filtro = document.getElementById('filtro-categoria').value;
-            const tareas = JSON.parse(localStorage.getItem('tareas')) || [];
-            tareas.forEach((tarea, index) => {
-                if (filtro !== 'Todas' && tarea.categoria !== filtro) return;
-                const tarjeta = document.createElement('div');
-                   tarjeta.style.backgroundColor = 'white'
-                tarjeta.className = 'tarjeta' + (tarea.realizada ? ' realizada' : '');
+      <label for="orden" class="label" style="margin-top:8px;">Ordenar por</label>
+      <select id="orden" class="select" onchange="mostrarTareas()">
+        <option value="creacion_desc">Más nuevas</option>
+        <option value="creacion_asc">Más antiguas</option>
+        <option value="nombre_asc">Nombre (A–Z)</option>
+        <option value="nombre_desc">Nombre (Z–A)</option>
+        <option value="vencimiento_asc">Vence antes</option>
+        <option value="vencimiento_desc">Vence después</option>
+      </select>
+      <small class="hint">Las tareas ancladas siempre van primero.</small>
+    </aside>
 
-                const info = document.createElement('div');
-                info.innerHTML = `<strong>${tarea.nombre}</strong><br>${tarea.descripcion}<br><em>${tarea.categoria}</em>`;
+    <main class="main">
+      <h2 class="main__title">Tareas</h2>
+      <div id="lista-tareas" class="lista"></div>
+    </main>
+  </div>
 
-                const acciones = document.createElement('div');
-                acciones.className = 'acciones';
+  <script>
+    // -------- utilidades de storage ----------
+    function getTareas() {
+      return JSON.parse(localStorage.getItem('tareas')) || [];
+    }
+    function setTareas(t) {
+      localStorage.setItem('tareas', JSON.stringify(t));
+    }
+    // Genera un id simple y único (suficiente para este caso)
+    function newId() {
+      return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+    // Asegura que la tarea tenga id (para migración suave)
+    function ensureId(t) {
+      if (t.id) return t.id;
+      t.id = 'm_' + (t.creadaEn ?? Date.now()); // usa creadaEn como base si existe
+      return t.id;
+    }
+    function findIndexById(arr, id) {
+      return arr.findIndex(t => (t.id || t.creadaEn) === id);
+    }
 
-                const btnRealizada = document.createElement('button');
-                btnRealizada.textContent = tarea.realizada ? '✔️' : 'Marcar realizada';
-                btnRealizada.onclick = function() {
-                    marcarRealizada(index);
-                };
+    // -------- colores por categoría (dinámicos y estables) ----------
+    function hashHue(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 360;
+      return h;
+    }
+    function styleForCategory(cat) {
+      const base = (cat && cat.trim()) ? cat.trim() : 'Sin categoría';
+      const hue = hashHue(base.toLowerCase());
+      const bg = `hsl(${hue} 70% 92%)`;
+      const text = `hsl(${hue} 30% 28%)`;
+      const border = `hsl(${hue} 45% 82%)`;
+      return { bg, text, border, label: base };
+    }
 
-                const btnEditar = document.createElement('button');
-                btnEditar.textContent = 'Editar';
-                btnEditar.onclick = function() {
-                    editarTarea(index);
-                };
-
-                acciones.appendChild(btnRealizada);
-                acciones.appendChild(btnEditar);
-
-                tarjeta.appendChild(info);
-                tarjeta.appendChild(acciones);
-
-                contenedor.appendChild(tarjeta);
-            });
+    // -------- ordenar (ancladas primero) ----------
+    function ordenarTareas(tareas, criterio) {
+      const copia = [...tareas];
+      // ancladas primero
+      copia.sort((a, b) => (b.fijada?1:0) - (a.fijada?1:0));
+      // luego el criterio dentro de cada grupo (stable por tramo)
+      const compare = (a,b) => {
+        switch (criterio) {
+          case 'creacion_asc': return (a.creadaEn||0) - (b.creadaEn||0);
+          case 'creacion_desc': return (b.creadaEn||0) - (a.creadaEn||0);
+          case 'nombre_asc': return (a.nombre||'').localeCompare(b.nombre||'');
+          case 'nombre_desc': return (b.nombre||'').localeCompare(a.nombre||'');
+          case 'vencimiento_asc': return (a.vencimiento||'').localeCompare(b.vencimiento||'');
+          case 'vencimiento_desc': return (b.vencimiento||'').localeCompare(a.vencimiento||'');
+          default: return 0;
         }
+      };
+      let i = 0;
+      while (i < copia.length) {
+        const flag = !!copia[i].fijada;
+        let j = i;
+        while (j < copia.length && !!copia[j].fijada === flag) j++;
+        copia.splice(i, j - i, ...copia.slice(i, j).sort(compare));
+        i = j;
+      }
+      return copia;
+    }
 
-        function marcarRealizada(index) {
-            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
-            tareas[index].realizada = !tareas[index].realizada;
-            localStorage.setItem('tareas', JSON.stringify(tareas));
-            mostrarTareas();
+    function mostrarTareas() {
+      const contenedor = document.getElementById('lista-tareas');
+      contenedor.innerHTML = '';
+
+      const filtroInput = document.getElementById('filtro-categoria').value.trim();
+      const filtro = (filtroInput === '' || filtroInput.toLowerCase() === 'todas') ? 'Todas' : filtroInput;
+      const criterio = document.getElementById('orden').value;
+
+      let tareas = getTareas();
+      if (tareas.length === 0) {
+        contenedor.innerHTML = '<p class="vacio">No hay tareas. Usá “Añadir tarea”.</p>';
+        return;
+      }
+
+      // garantizamos IDs para todas (migración)
+      tareas.forEach(t => ensureId(t));
+      setTareas(tareas);
+
+      tareas = ordenarTareas(tareas, criterio);
+
+      tareas.forEach((tarea) => {
+        if (filtro !== 'Todas' && (tarea.categoria || 'Sin categoría') !== filtro) return;
+
+        const id = tarea.id || tarea.creadaEn; // clave estable
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'tarjeta' + (tarea.realizada ? ' realizada' : '') + (tarea.fijada ? ' tarjeta--pinned' : '');
+        tarjeta.dataset.id = id;
+
+        const info = document.createElement('div');
+        info.className = 'tarjeta__info';
+
+        const headerRow = document.createElement('div');
+        headerRow.className = 'tarjeta__row';
+
+        // Botón estado (realizada)
+        const statusBtn = document.createElement('button');
+        statusBtn.className = 'status' + (tarea.realizada ? ' is-done' : '');
+        statusBtn.title = tarea.realizada ? 'Marcar como pendiente' : 'Marcar como realizada';
+        statusBtn.setAttribute('aria-pressed', tarea.realizada ? 'true' : 'false');
+        statusBtn.onclick = function () { toggleDoneById(id); };
+
+        const nombre = document.createElement('strong');
+        nombre.textContent = tarea.nombre || 'Sin nombre';
+        nombre.className = 'tarjeta__nombre';
+
+        headerRow.appendChild(statusBtn);
+        headerRow.appendChild(nombre);
+
+        const desc = document.createElement('p');
+        desc.className = 'tarjeta__desc';
+        desc.textContent = tarea.descripcion || '';
+
+        const tag = document.createElement('small');
+        const cat = (tarea.categoria || 'Sin categoría');
+        const style = styleForCategory(cat);
+        tag.className = 'tag';
+        tag.textContent = style.label;
+        tag.style.background = style.bg;
+        tag.style.color = style.text;
+        tag.style.borderColor = style.border;
+
+        const metasWrap = document.createElement('div');
+        metasWrap.style.marginTop = '4px';
+
+        const fechas = document.createElement('small');
+        const partes = [];
+        if (tarea.vencimiento) partes.push('Vence: ' + tarea.vencimiento);
+        if (tarea.creadaEn) {
+          const d = new Date(tarea.creadaEn);
+          partes.push('Creada: ' + d.toLocaleDateString());
         }
+        fechas.textContent = partes.join(' · ');
 
-        function editarTarea(index) {
-            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
-            const nuevoNombre = prompt('Nuevo nombre de la tarea:', tareas[index].nombre);
-            const nuevaDescripcion = prompt('Nueva descripción de la tarea:', tareas[index].descripcion);
-            const nuevaCategoria = prompt('Nueva categoría (Trabajo, Estudio, Personal):', tareas[index].categoria);
-            if (nuevoNombre !== null && nuevaDescripcion !== null && nuevaCategoria !== null) {
-                tareas[index].nombre = nuevoNombre;
-                tareas[index].descripcion = nuevaDescripcion;
-                tareas[index].categoria = nuevaCategoria;
-                localStorage.setItem('tareas', JSON.stringify(tareas));
-                mostrarTareas();
-            }
-        }
+        info.appendChild(headerRow);
+        if (tarea.descripcion) info.appendChild(desc);
+        info.appendChild(tag);
+        if (partes.length) metasWrap.appendChild(fechas);
+        if (metasWrap.childNodes.length) info.appendChild(metasWrap);
 
-        window.onload = mostrarTareas;
-    </script>
+        const acciones = document.createElement('div');
+        acciones.className = 'tarjeta__acciones';
+
+        const btnPin = document.createElement('button');
+        btnPin.className = 'btn btn--small btn--icon';
+        btnPin.title = tarea.fijada ? 'Quitar anclaje' : 'Anclar';
+        btnPin.textContent = tarea.fijada ? '📌' : '📍';
+        btnPin.onclick = function () { togglePinById(id); };
+
+        const btnEditar = document.createElement('button');
+        btnEditar.className = 'btn btn--small';
+        btnEditar.textContent = 'Editar';
+        btnEditar.onclick = function () { editarTareaById(id); };
+
+        acciones.appendChild(btnPin);
+        acciones.appendChild(btnEditar);
+
+        tarjeta.appendChild(info);
+        tarjeta.appendChild(acciones);
+        contenedor.appendChild(tarjeta);
+      });
+    }
+
+    // -------- acciones por ID ----------
+    function toggleDoneById(id) {
+      const tareas = getTareas();
+      const idx = findIndexById(tareas, id);
+      if (idx === -1) return;
+      tareas[idx].realizada = !tareas[idx].realizada;
+      setTareas(tareas);
+      mostrarTareas();
+    }
+
+    function togglePinById(id) {
+      const tareas = getTareas();
+      const idx = findIndexById(tareas, id);
+      if (idx === -1) return;
+      tareas[idx].fijada = !tareas[idx].fijada;
+      setTareas(tareas);
+      mostrarTareas();
+    }
+
+    function editarTareaById(id) {
+      const tareas = getTareas();
+      const idx = findIndexById(tareas, id);
+      if (idx === -1) return;
+      const actual = tareas[idx];
+
+      const nuevoNombre = prompt('Nuevo nombre:', actual.nombre ?? '');
+      if (nuevoNombre === null) return;
+      const nombreFinal = (nuevoNombre || '').trim();
+      if (!nombreFinal) { alert('El nombre no puede quedar vacío.'); return; }
+
+      const nuevaDescripcion = prompt('Nueva descripción:', actual.descripcion ?? '');
+      if (nuevaDescripcion === null) return;
+
+      const nuevaCategoria = prompt('Nueva categoría (escribí cualquier nombre):', actual.categoria ?? '');
+      if (nuevaCategoria === null) return;
+      const catFinal = (nuevaCategoria || '').trim() || 'Sin categoría';
+
+      const nuevaVenc = prompt('Nueva fecha de vencimiento (AAAA-MM-DD, opcional):', actual.vencimiento ?? '');
+      if (nuevaVenc === null) return;
+      const vencFinal = (nuevaVenc || '').trim();
+
+      const fijadaStr = prompt('¿Fijar tarea? (si/no)', actual.fijada ? 'si' : 'no');
+      if (fijadaStr === null) return;
+      const fijada = /^s[ií]$/i.test((fijadaStr || '').trim());
+
+      actual.id = ensureId(actual);
+      actual.nombre = nombreFinal;
+      actual.descripcion = (nuevaDescripcion || '').trim();
+      actual.categoria = catFinal;
+      actual.vencimiento = vencFinal;
+      actual.fijada = fijada;
+
+      setTareas(tareas);
+      mostrarTareas();
+    }
+
+    window.onload = mostrarTareas;
+  </script>
 </body>
 </html>
