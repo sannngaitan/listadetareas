@@ -1,48 +1,152 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="estilo.css">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Eliminar Tareas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilo.css" />
 </head>
-<body style="background-color:  #FFDD33;">
-    <h1>Eliminar Tarea</h1>
-    <div id="centrar2">
-    <ul id="lista-tareas"></ul>
+<body>
+  <header class="header">
+    <h1 class="header__title">Eliminar Tareas</h1>
+    <nav class="header__actions">
+      <a class="btn" href="index.html">Volver</a>
+      <a class="btn btn--primary" href="añadir.html">Añadir tarea</a>
+    </nav>
+  </header>
 
-    <script >
-        function mostrarTareas() {
-            const lista = document.getElementById('lista-tareas');
-            lista.innerHTML = '';
-            lista.style.fontSize = "30px";
-            const tareas = JSON.parse(localStorage.getItem('tareas')) || [];
-            tareas.forEach((tarea, index) => {
-                const li = document.createElement('li');
-                li.textContent = `${tarea.nombre}: ${tarea.descripcion}`;
-                const btnEliminar = document.createElement('button');
-                btnEliminar.style.marginLeft = "15px";
-                btnEliminar.textContent = 'Eliminar';
-                btnEliminar.style.backgroundColor = 'red';
-                btnEliminar.onclick = function() {
-                    eliminarTarea(index);
-                };
-                li.appendChild(btnEliminar);
-                lista.appendChild(li);
-            });
-        }
+  <main class="main main--narrow">
+    <div id="contenedor-eliminar" class="lista"></div>
 
-        function eliminarTarea(index) {
-            let tareas = JSON.parse(localStorage.getItem('tareas')) || [];
-            tareas.splice(index, 1);
-            localStorage.setItem('tareas', JSON.stringify(tareas));
-            mostrarTareas();
-        }
+    <div class="form__actions" style="margin-top:12px;">
+      <button class="btn btn--danger" id="btn-eliminar-seleccion">Eliminar seleccionadas</button>
+      <button class="btn" id="btn-eliminar-todas">Eliminar todas</button>
+    </div>
+  </main>
 
-        window.onload = mostrarTareas;
-    </script>
-    <a href="index.html"><button id="Volver">Volver a la pagina principal</button></a>
-    
-</div>
+  <!-- Modal reutilizable -->
+  <div class="modal" id="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+    <div class="modal__backdrop" data-modal-dismiss></div>
+    <div class="modal__dialog" role="document">
+      <h2 class="modal__title" id="modal-title">Confirmar acción</h2>
+      <p class="modal__message" id="modal-message">¿Estás seguro?</p>
+      <div class="modal__actions">
+        <button class="btn" data-modal-cancel>Cancelar</button>
+        <button class="btn btn--danger" data-modal-accept>Aceptar</button>
+      </div>
+      <!-- La X cierra, pero NO cambia su texto -->
+      <button class="modal__x" title="Cerrar" aria-label="Cerrar" data-modal-dismiss>&times;</button>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Utilidad de modal tipo confirm ----------
+    function confirmModal(message, { title = 'Confirmar acción', acceptText = 'Aceptar', cancelText = 'Cancelar' } = {}) {
+      return new Promise(resolve => {
+        const modal = document.getElementById('modal');
+        const msg = document.getElementById('modal-message');
+        const titleEl = document.getElementById('modal-title');
+        const btnOk = modal.querySelector('[data-modal-accept]');
+        const btnCancel = modal.querySelector('.modal__actions [data-modal-cancel]');
+        const dismissibles = modal.querySelectorAll('[data-modal-dismiss]');
+
+        // Set texts
+        titleEl.textContent = title;
+        msg.textContent = message;
+        btnOk.textContent = acceptText;
+        btnCancel.textContent = cancelText;
+
+        // Handlers
+        const close = (result) => {
+          modal.setAttribute('aria-hidden', 'true');
+          modal.classList.remove('is-open');
+          btnOk.removeEventListener('click', onOk);
+          btnCancel.removeEventListener('click', onCancel);
+          dismissibles.forEach(d => d.removeEventListener('click', onCancel));
+          document.removeEventListener('keydown', onEsc);
+          resolve(result);
+        };
+
+        const onOk = () => close(true);
+        const onCancel = () => close(false);
+        const onEsc = (e) => { if (e.key === 'Escape') onCancel(); };
+
+        btnOk.addEventListener('click', onOk);
+        btnCancel.addEventListener('click', onCancel);
+        dismissibles.forEach(d => d.addEventListener('click', onCancel));
+        document.addEventListener('keydown', onEsc);
+
+        // Open
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        btnOk.focus();
+      });
+    }
+
+    // ---------- UI de eliminación ----------
+    const contenedor = document.getElementById('contenedor-eliminar');
+
+    function cargarTareas() {
+      contenedor.innerHTML = '';
+      const tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+
+      if (tareas.length === 0) {
+        contenedor.innerHTML = '<p class="vacio">No hay tareas para eliminar.</p>';
+        return;
+      }
+
+      tareas.forEach((tarea, idx) => {
+        const fila = document.createElement('label');
+        fila.className = 'fila-check';
+
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.value = idx;
+
+        const text = document.createElement('span');
+        text.textContent = `${tarea.nombre} — ${tarea.categoria}${tarea.realizada ? ' (realizada)' : ''}`;
+
+        fila.appendChild(chk);
+        fila.appendChild(text);
+        contenedor.appendChild(fila);
+      });
+    }
+
+    document.getElementById('btn-eliminar-seleccion').onclick = async function () {
+      const checks = contenedor.querySelectorAll('input[type="checkbox"]:checked');
+      if (checks.length === 0) return;
+
+      const ok = await confirmModal(
+        `¿Seguro que querés eliminar ${checks.length} tarea(s) seleccionada(s)?`,
+        { title: 'Eliminar seleccionadas', acceptText: 'Eliminar', cancelText: 'Cancelar' }
+      );
+      if (!ok) return;
+
+      const indices = Array.from(checks).map(c => parseInt(c.value, 10)).sort((a,b)=>b-a);
+      const tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+      indices.forEach(i => tareas.splice(i, 1));
+      localStorage.setItem('tareas', JSON.stringify(tareas));
+      cargarTareas();
+    };
+
+    document.getElementById('btn-eliminar-todas').onclick = async function () {
+      const tareas = JSON.parse(localStorage.getItem('tareas')) || [];
+      if (tareas.length === 0) return;
+
+      const ok = await confirmModal(
+        '¿Seguro que querés eliminar todas las tareas? Esta acción no se puede deshacer.',
+        { title: 'Eliminar todas', acceptText: 'Eliminar todo', cancelText: 'Cancelar' }
+      );
+      if (!ok) return;
+
+      localStorage.setItem('tareas', JSON.stringify([]));
+      cargarTareas();
+    };
+
+    window.onload = cargarTareas;
+  </script>
 </body>
 </html>
