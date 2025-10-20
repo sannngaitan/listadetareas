@@ -61,7 +61,6 @@
     function newId() {
       return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     }
-    // Asegura que la tarea tenga id (para migración suave)
     function ensureId(t) {
       if (t.id) return t.id;
       t.id = 'm_' + (t.creadaEn ?? Date.now()); // usa creadaEn como base si existe
@@ -91,7 +90,6 @@
       const copia = [...tareas];
       // ancladas primero
       copia.sort((a, b) => (b.fijada?1:0) - (a.fijada?1:0));
-      // luego el criterio dentro de cada grupo (stable por tramo)
       const compare = (a,b) => {
         switch (criterio) {
           case 'creacion_asc': return (a.creadaEn||0) - (b.creadaEn||0);
@@ -128,7 +126,6 @@
         return;
       }
 
-      // garantizamos IDs para todas (migración)
       tareas.forEach(t => ensureId(t));
       setTareas(tareas);
 
@@ -276,3 +273,4 @@
   </script>
 </body>
 </html>
+
